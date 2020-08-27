@@ -1,0 +1,7 @@
+{
+    "triggerTaskOnSave.tasks": {
+        "build sky_win32": [
+            "code/*"
+        ]
+    }
+}
