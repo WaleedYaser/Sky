@@ -2,6 +2,16 @@
 
 #include <GL/glew.h>
 
+#include "imgui/imgui.h"
+#include "imgui/imgui_impl_opengl3.h"
+
+// unity build
+#include "imgui/imgui.cpp"
+#include "imgui/imgui_impl_opengl3.cpp"
+#include "imgui/imgui_demo.cpp"
+#include "imgui/imgui_draw.cpp"
+#include "imgui/imgui_widgets.cpp"
+
 const char *vshader = R"""(
     #version 450 core
     layout (location = 0) in vec3 pos;
@@ -76,12 +86,18 @@ _sky_game_construct(Sky_Game *self)
 static void
 _sky_game_destruct(Sky_Game *self)
 {
-
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui::DestroyContext();
 }
 
 static void
 _sky_game_reload(Sky_Game *self)
 {
+    // imgui
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGui_ImplOpenGL3_Init();
+
     float pos[] = {
          0.5f, -0.5f, 0.0f,
         -0.5f, -0.5f, 0.0f,
@@ -113,12 +129,31 @@ _sky_game_reload(Sky_Game *self)
 static void
 _sky_game_loop(Sky_Game *self)
 {
+    ImGuiIO &io = ImGui::GetIO();
+    io.DeltaTime = 1.0f / 60.0f;
+    io.DisplaySize.x = (float)self->width;
+    io.DisplaySize.y = (float)self->height;
+    io.MousePos = {(float)self->input.mouse_x, (float)self->input.mouse_y};
+    io.MouseDown[0] = self->input.keys[SKY_KEY_MOUSE_LEFT].down;
+    io.MouseDown[1] = self->input.keys[SKY_KEY_MOUSE_RIGHT].down;
+    io.MouseDown[2] = self->input.keys[SKY_KEY_MOUSE_MIDDLE].down;
+    io.MouseWheel = (float)self->input.mouse_wheel;
+
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui::NewFrame();
+
     glViewport(0, 0, self->width, self->height);
 
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
+    ImGui::Text("Hello, World!");
+
     glDrawArrays(GL_TRIANGLES, 0, 3);
+
+    ImGui::EndFrame();
+    ImGui::Render();
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
 Sky_Game_Api *

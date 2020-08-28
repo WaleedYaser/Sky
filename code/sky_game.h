@@ -9,6 +9,10 @@ extern "C" {
 
 enum SKY_KEY
 {
+    SKY_KEY_MOUSE_LEFT,
+    SKY_KEY_MOUSE_MIDDLE,
+    SKY_KEY_MOUSE_RIGHT,
+
     SKY_KEY_LEFT,
     SKY_KEY_RIGHT,
     SKY_KEY_UP,
@@ -27,20 +31,11 @@ typedef struct Sky_Key_State
     int released_count;
 } Sky_Key_State;
 
-typedef struct Sky_Mouse_State
+typedef struct Sky_Input
 {
     int mouse_x, mouse_y;
     int mouse_dx, mouse_dy;
     int mouse_wheel;
-
-    Sky_Key_State left;
-    Sky_Key_State mid;
-    Sky_Key_State right;
-} Sky_Mouse_State;
-
-typedef struct Sky_Input
-{
-    Sky_Mouse_State mouse;
     Sky_Key_State keys[SKY_KEY_COUNT];
 } Sky_Input;
 

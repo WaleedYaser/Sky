@@ -187,6 +187,12 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pCmdLine, int nCmdSh
 
     while (game.quit == false)
     {
+        for (int i = 0; i < SKY_KEY_COUNT; ++i)
+        {
+            game.input.keys[i].pressed = false;
+            game.input.keys[i].released = false;
+        }
+
         MSG msg = {};
         while (PeekMessage(&msg, 0, 0, 0, PM_REMOVE))
         {
@@ -198,12 +204,64 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pCmdLine, int nCmdSh
             case WM_QUIT:
                 game.quit = true;
                 break;
+            
+            case WM_LBUTTONDOWN:
+                SetCapture(hwnd);
+                game.input.keys[SKY_KEY_MOUSE_LEFT].pressed = true;
+                game.input.keys[SKY_KEY_MOUSE_LEFT].down    = true;
+                game.input.keys[SKY_KEY_MOUSE_LEFT].pressed_count++;
+                break;
+            case WM_LBUTTONUP:
+                SetCapture(nullptr);
+                game.input.keys[SKY_KEY_MOUSE_LEFT].released = true;
+                game.input.keys[SKY_KEY_MOUSE_LEFT].down     = false;
+                game.input.keys[SKY_KEY_MOUSE_LEFT].released_count++;
+                break;
+
+            case WM_RBUTTONDOWN:
+                SetCapture(hwnd);
+                game.input.keys[SKY_KEY_MOUSE_RIGHT].pressed = true;
+                game.input.keys[SKY_KEY_MOUSE_RIGHT].down    = true;
+                game.input.keys[SKY_KEY_MOUSE_RIGHT].pressed_count++;
+                break;
+            case WM_RBUTTONUP:
+                SetCapture(nullptr);
+                game.input.keys[SKY_KEY_MOUSE_RIGHT].released = true;
+                game.input.keys[SKY_KEY_MOUSE_RIGHT].down     = false;
+                game.input.keys[SKY_KEY_MOUSE_RIGHT].released_count++;
+                break;
+
+            case WM_MBUTTONDOWN:
+                SetCapture(hwnd);
+                game.input.keys[SKY_KEY_MOUSE_MIDDLE].pressed = true;
+                game.input.keys[SKY_KEY_MOUSE_MIDDLE].down    = true;
+                game.input.keys[SKY_KEY_MOUSE_MIDDLE].pressed_count++;
+                break;
+            case WM_MBUTTONUP:
+                SetCapture(nullptr);
+                game.input.keys[SKY_KEY_MOUSE_MIDDLE].released = true;
+                game.input.keys[SKY_KEY_MOUSE_MIDDLE].down     = false;
+                game.input.keys[SKY_KEY_MOUSE_MIDDLE].released_count++;
+                break;
+
+            case WM_MOUSEWHEEL:
+                game.input.mouse_wheel = GET_WHEEL_DELTA_WPARAM(msg.wParam);
+                break;
             }
         }
         RECT rect;
         GetClientRect(hwnd, &rect);
         game.width = rect.right - rect.left;
         game.height = rect.bottom - rect.top;
+
+        POINT point;
+        GetCursorPos(&point);
+        ScreenToClient(hwnd, &point);
+
+        game.input.mouse_dx = point.x - game.input.mouse_x;
+        game.input.mouse_dy = point.y - game.input.mouse_y;
+        game.input.mouse_x = point.x;
+        game.input.mouse_y = point.y;
 
         if (_hot_reload_sky_game(&api))
             api->reload(&game);
