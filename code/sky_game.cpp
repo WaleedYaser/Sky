@@ -1,8 +1,6 @@
 #include "sky_game.h"
 
-#include "gl_lite.h"
-#define GL_LITE_IMPLEMENTATION
-#include "gl_lite.h"
+#include <GL/glew.h>
 
 const char *vshader = R"""(
     #version 450 core
@@ -84,8 +82,6 @@ _sky_game_destruct(Sky_Game *self)
 static void
 _sky_game_reload(Sky_Game *self)
 {
-    gl_lite_init();
-
     float pos[] = {
          0.5f, -0.5f, 0.0f,
         -0.5f, -0.5f, 0.0f,

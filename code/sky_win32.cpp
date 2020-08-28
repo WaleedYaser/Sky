@@ -3,8 +3,10 @@
 #endif
 
 #include <windows.h>
-#include <GL/GL.h>
 #include <assert.h>
+
+#include <GL/glew.h>
+#include <GL/wglew.h>
 
 #include "sky_game.h"
 
@@ -78,6 +80,7 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pCmdLine, int nCmdSh
     wcx.cbSize = sizeof(wcx);
     wcx.style = CS_OWNDC;
     wcx.lpfnWndProc = _wnd_proc;
+    wcx.hCursor = LoadCursor(nullptr, IDC_ARROW);
     wcx.hInstance = hInstance;
     wcx.lpszClassName = L"sky_window_class";
     ATOM class_atom = RegisterClassEx(&wcx);
@@ -114,11 +117,53 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pCmdLine, int nCmdSh
         0, 0, 0};
 
     HDC hdc = GetDC(hwnd);
+
     int pixel_format = ChoosePixelFormat(hdc, &pfd);
     SetPixelFormat(hdc, pixel_format, &pfd);
 
     HGLRC context = wglCreateContext(hdc);
-    wglMakeCurrent(hdc, context);
+    assert(context && "wglCreateContext failed");
+
+    res = wglMakeCurrent(hdc, context);
+    assert(res && "wglMakeCurrent failed");
+
+    GLenum glew_res = glewInit();
+    assert(glew_res == GLEW_OK && "glewInit failed");
+
+    int attrib_list[] = {
+        WGL_DRAW_TO_WINDOW_ARB, GL_TRUE,
+        WGL_SUPPORT_OPENGL_ARB, GL_TRUE,
+        WGL_DOUBLE_BUFFER_ARB, GL_TRUE,
+        WGL_PIXEL_TYPE_ARB, WGL_TYPE_RGBA_ARB,
+        WGL_COLOR_BITS_ARB, 32,
+        WGL_DEPTH_BITS_ARB, 24,
+        WGL_STENCIL_BITS_ARB, 8,
+        0};
+    pixel_format;
+    unsigned int num_format;
+    bool status = wglChoosePixelFormatARB(hdc, attrib_list, nullptr, 1, &pixel_format, &num_format);
+    assert(status && num_format > 0 && "wglChoosePixelFormatARB failed");
+
+    pfd = {};
+    res = DescribePixelFormat(hdc, pixel_format, sizeof(pfd), &pfd);
+    assert(res && "DescribePixelFormat failed");
+    res = SetPixelFormat(hdc, pixel_format, &pfd);
+    assert(res && "SetPixelFormat failed");
+
+    const int major_min = 4, minor_min = 5;
+    int context_attribs[] = {
+        WGL_CONTEXT_MAJOR_VERSION_ARB, major_min,
+        WGL_CONTEXT_MINOR_VERSION_ARB, minor_min,
+        WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
+        0};
+    
+    context = wglCreateContextAttribsARB(hdc, 0, context_attribs);
+    assert(context && "wglCreateContextAttribsARB failed");
+    res = wglMakeCurrent(hdc, context);
+    assert(res && "wglMakeCurrent failed");
+
+    glew_res = glewInit();
+    assert(glew_res == GLEW_OK && "glewInit failed");
 
     const char *gl_version = (char *)glGetString(GL_VERSION);
     wchar_t *w_gl_version = buffer;
