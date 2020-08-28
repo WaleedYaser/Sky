@@ -192,6 +192,7 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pCmdLine, int nCmdSh
             game.input.keys[i].pressed = false;
             game.input.keys[i].released = false;
         }
+        game.input.mouse_wheel = 0.0f;
 
         MSG msg = {};
         while (PeekMessage(&msg, 0, 0, 0, PM_REMOVE))
@@ -245,7 +246,7 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pCmdLine, int nCmdSh
                 break;
 
             case WM_MOUSEWHEEL:
-                game.input.mouse_wheel = GET_WHEEL_DELTA_WPARAM(msg.wParam);
+                game.input.mouse_wheel += (float)GET_WHEEL_DELTA_WPARAM(msg.wParam) / (float)WHEEL_DELTA;
                 break;
             }
         }

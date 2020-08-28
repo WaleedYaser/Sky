@@ -35,7 +35,7 @@ typedef struct Sky_Input
 {
     int mouse_x, mouse_y;
     int mouse_dx, mouse_dy;
-    int mouse_wheel;
+    float mouse_wheel;
     Sky_Key_State keys[SKY_KEY_COUNT];
 } Sky_Input;
 

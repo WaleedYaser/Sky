@@ -147,7 +147,7 @@ _sky_game_loop(Sky_Game *self)
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    ImGui::Text("Hello, World!");
+    ImGui::ShowDemoWindow();
 
     glDrawArrays(GL_TRIANGLES, 0, 3);
 
