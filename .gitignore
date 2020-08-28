@@ -1,2 +1,5 @@
 # build folder
-build/
+build
+
+# package folder
+package
