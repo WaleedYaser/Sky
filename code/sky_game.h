@@ -39,11 +39,21 @@ typedef struct Sky_Input
     Sky_Key_State keys[SKY_KEY_COUNT];
 } Sky_Input;
 
+typedef struct Sky_Mesh_GPU
+{
+    unsigned int handle;
+    int vertex_count;
+} Sky_Mesh_GPU;
+
+#define SKY_GAME_MAX_MESHES 10
 typedef struct Sky_Game
 {
     bool quit;
     int width, height;
     Sky_Input input;
+
+    Sky_Mesh_GPU mesh_gpu[SKY_GAME_MAX_MESHES];
+    int mesh_count;
 } Sky_Game;
 
 typedef struct Sky_Game_Api

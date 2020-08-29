@@ -1,11 +1,11 @@
 #include "sky_game.h"
-
-#include <GL/glew.h>
+#include "sky_gfx.h"
 
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_opengl3.h"
 
 // unity build
+#include "sky_gfx.cpp"
 #include "imgui/imgui.cpp"
 #include "imgui/imgui_impl_opengl3.cpp"
 #include "imgui/imgui_demo.cpp"
@@ -38,49 +38,42 @@ const char *fshader = R"""(
     }
 )""";
 
-void
-_sky_game_shader_program_build()
-{
-    int vertex_shader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertex_shader, 1, &vshader, nullptr);
-    glCompileShader(vertex_shader);
-    int success;
-    char info_log[512];
-    glGetShaderiv(vertex_shader, GL_COMPILE_STATUS, &success);
-    if (success == false)
-    {
-        glGetShaderInfoLog(vertex_shader, sizeof(info_log), nullptr, info_log);
-    }
-
-    int fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragment_shader, 1, &fshader, nullptr);
-    glCompileShader(fragment_shader);
-    glGetShaderiv(vertex_shader, GL_COMPILE_STATUS, &success);
-    if (success == false)
-    {
-        glGetShaderInfoLog(fragment_shader, sizeof(info_log), nullptr, info_log);
-    }
-
-    int program = glCreateProgram();
-    glAttachShader(program, vertex_shader);
-    glAttachShader(program, fragment_shader);
-    glLinkProgram(program);
-    glGetProgramiv(program, GL_LINK_STATUS, &success);
-    if (success == false)
-    {
-        glGetProgramInfoLog(program, sizeof(info_log), nullptr, info_log);
-    }
-
-    glDeleteShader(vertex_shader);
-    glDeleteShader(fragment_shader);
-
-    glUseProgram(program);
-}
-
 static void
 _sky_game_construct(Sky_Game *self)
 {
     *self = {};
+
+    for (int i = 0; i < SKY_GAME_MAX_MESHES; ++i)
+    {
+        float pos[] = {
+             0.5f / i, -0.5f / i, 0.0f / i,
+            -0.5f / i, -0.5f / i, 0.0f / i,
+             0.0f / i,  0.5f / i, 0.0f / i};
+
+        float colors[] = {
+            1.0f / i, 1.0f / i, 0.0f / i,
+            0.0f / i, 1.0f / i, 1.0f / i,
+            1.0f / i, 0.0f / i, 1.0f / i};
+
+        unsigned int VBO[2], VAO;
+        glGenVertexArrays(1, &VAO);
+        glGenBuffers(2, VBO);
+        glBindVertexArray(VAO);
+
+        glBindBuffer(GL_ARRAY_BUFFER, VBO[0]);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(pos), pos, GL_STATIC_DRAW);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), 0);
+        glEnableVertexAttribArray(0);
+
+        glBindBuffer(GL_ARRAY_BUFFER, VBO[1]);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(colors), colors, GL_STATIC_DRAW);
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), 0);
+        glEnableVertexAttribArray(1);
+
+        self->mesh_gpu[self->mesh_count].handle = VAO;
+        self->mesh_gpu[self->mesh_count].vertex_count = 3;
+        self->mesh_count += 1;
+    }
 }
 
 static void
@@ -98,32 +91,8 @@ _sky_game_reload(Sky_Game *self)
     ImGui::CreateContext();
     ImGui_ImplOpenGL3_Init();
 
-    float pos[] = {
-         0.5f, -0.5f, 0.0f,
-        -0.5f, -0.5f, 0.0f,
-         0.0f,  0.5f, 0.0f};
-
-    float colors[] = {
-        1.0f, 1.0f, 0.0f,
-        0.0f, 1.0f, 1.0f,
-        1.0f, 0.0f, 1.0f};
-
-    unsigned int VBO[2], VAO;
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(2, VBO);
-    glBindVertexArray(VAO);
-
-    glBindBuffer(GL_ARRAY_BUFFER, VBO[0]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(pos), pos, GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), 0);
-    glEnableVertexAttribArray(0);
-
-    glBindBuffer(GL_ARRAY_BUFFER, VBO[1]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(colors), colors, GL_STATIC_DRAW);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), 0);
-    glEnableVertexAttribArray(1);
-
-    _sky_game_shader_program_build();
+    Sky_Gfx_Handle program = sky_gfx_program_new(vshader, fshader);
+    sky_gfx_program_use(program);
 }
 
 static void
@@ -149,7 +118,11 @@ _sky_game_loop(Sky_Game *self)
 
     ImGui::ShowDemoWindow();
 
-    glDrawArrays(GL_TRIANGLES, 0, 3);
+    for (int i = 0; i < self->mesh_count; ++i)
+    {
+        glBindVertexArray(self->mesh_gpu[i].handle);
+        glDrawArrays(GL_TRIANGLES, 0, self->mesh_gpu[i].vertex_count);
+    }
 
     ImGui::EndFrame();
     ImGui::Render();
