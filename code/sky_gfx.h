@@ -20,3 +20,33 @@ sky_gfx_program_free(Sky_Gfx_Handle program);
 
 void
 sky_gfx_program_use(Sky_Gfx_Handle program);
+
+void
+sky_gfx_program_set_bool(Sky_Gfx_Handle program, const char *name, bool value);
+
+void
+sky_gfx_program_set_int(Sky_Gfx_Handle program, const char *name, int value);
+
+void
+sky_gfx_program_set_float(Sky_Gfx_Handle program, const char *name, float value);
+
+void
+sky_gfx_program_set_vec2i(Sky_Gfx_Handle program, const char *name, int *value);
+
+void
+sky_gfx_program_set_vec3i(Sky_Gfx_Handle program, const char *name, int *value);
+
+void
+sky_gfx_program_set_vec4i(Sky_Gfx_Handle program, const char *name, int *value);
+
+void
+sky_gfx_program_set_vec2f(Sky_Gfx_Handle program, const char *name, float *value);
+
+void
+sky_gfx_program_set_vec3f(Sky_Gfx_Handle program, const char *name, float *value);
+
+void
+sky_gfx_program_set_vec4f(Sky_Gfx_Handle program, const char *name, float *value);
+
+void
+sky_gfx_program_set_mat4f(Sky_Gfx_Handle program, const char *name, float *value);

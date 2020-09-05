@@ -1,5 +1,7 @@
 #pragma once
 
+#include "sky_cam.h"
+
 #define SKY_GAME_API __declspec(dllexport)
 #define SKY_GAME_API_PROC_NAME "sky_game_api"
 
@@ -51,6 +53,7 @@ typedef struct Sky_Game
     bool quit;
     int width, height;
     Sky_Input input;
+    Sky_Cam cam;
 
     Sky_Mesh_GPU mesh_gpu[SKY_GAME_MAX_MESHES];
     int mesh_count;

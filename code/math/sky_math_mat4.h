@@ -296,6 +296,21 @@ mat4_inverse(const Mat4 &M)
         + M.m02 * (M.m10 * M.m21 - M.m11 * M.m20)};
 }
 
+// TODO(Waleed): add unittest
+inline Mat4
+mat4_coord(Vec3 right, Vec3 up, Vec3 forward)
+{
+    right = vec3_normalize(right);
+    up = vec3_normalize(up);
+    forward = vec3_normalize(forward);
+
+    return Mat4{
+        right.x,   right.y,   right.z,   0.0f,
+        up.x,      up.y,      up.z,      0.0f,
+        forward.x, forward.y, forward.z, 0.0f,
+        0.0f,      0.0f,      0.0f,      1.0f};
+}
+
 inline Vec3
 mat4_axis_x(const Mat4 &M)
 {
