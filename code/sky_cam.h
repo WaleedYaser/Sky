@@ -7,7 +7,7 @@
 struct Sky_Cam
 {
     Vec3 position;
-    Vec3 forward;
+    Vec3 rotation;
 
     float fov;
     float aspect;
@@ -15,29 +15,40 @@ struct Sky_Cam
     float zfar;
 };
 
-inline Mat4
-sky_cam_view_mat(const Sky_Cam &cam)
+inline Sky_Cam
+sky_cam_init()
 {
-    Vec3 up = Vec3{0.0f, 1.0f, 0.0f};
-    Vec3 right = vec3_cross(up, cam.forward);
-    up = vec3_cross(cam.forward, right);
+    Sky_Cam self{};
 
-    Mat4 res = mat4_coord(right, up, cam.forward);
-    res.m30 = -cam.position.x;
-    res.m31 = -cam.position.y;
-    res.m32 = -cam.position.z;
+    self.position.z = 34.0f;
+    self.position.y = 20.0f;
+    self.rotation.x = 30.0f * DEGREE_TO_RAD;
 
-    return res;
+    self.fov = 45.0f;
+    self.aspect = 1.0f;
+    self.znear = 0.1f;
+    self.zfar = 100.0f;
+
+    return self;
 }
 
 inline Mat4
-sky_cam_proj_mat(const Sky_Cam &cam)
+sky_cam_view_mat(const Sky_Cam &self)
 {
-    return mat4_prespective(cam.fov * DEGREE_TO_RAD, cam.aspect, cam.znear, cam.zfar);
+    return
+        mat4_rotation_y(self.rotation.y) *
+        mat4_translation(-self.position.x, -self.position.y, -self.position.z) *
+        mat4_rotation_x(self.rotation.x);
 }
 
 inline Mat4
-sky_cam_viewproj_mat(const Sky_Cam &cam)
+sky_cam_proj_mat(const Sky_Cam &self)
 {
-    return sky_cam_view_mat(cam) * sky_cam_proj_mat(cam);
+    return mat4_prespective(self.fov * DEGREE_TO_RAD, self.aspect, self.znear, self.zfar);
+}
+
+inline Mat4
+sky_cam_viewproj_mat(const Sky_Cam &self)
+{
+    return sky_cam_view_mat(self) * sky_cam_proj_mat(self);
 }

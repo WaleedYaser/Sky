@@ -47,7 +47,10 @@ typedef struct Sky_Mesh_GPU
     int vertex_count;
 } Sky_Mesh_GPU;
 
-#define SKY_GAME_MAX_MESHES 10
+#define SKY_GAME_MAP_WIDTH 11
+#define SKY_GAME_MAP_HEIGHT 11
+#define SKY_GAME_MAX_VERTEX_BUFFER_SIZE (SKY_GAME_MAP_WIDTH * SKY_GAME_MAP_HEIGHT * 12 * 3 * 3 * sizeof(float))
+
 typedef struct Sky_Game
 {
     bool quit;
@@ -55,14 +58,17 @@ typedef struct Sky_Game
     Sky_Input input;
     Sky_Cam cam;
 
-    Sky_Mesh_GPU mesh_gpu[SKY_GAME_MAX_MESHES];
-    int mesh_count;
+    char map[SKY_GAME_MAP_WIDTH * SKY_GAME_MAP_HEIGHT];
+    float map_cpu[SKY_GAME_MAX_VERTEX_BUFFER_SIZE];
+    int map_cpu_vertex_count;
+
+    unsigned int VAO, VBO;
 } Sky_Game;
 
 typedef struct Sky_Game_Api
 {
-    void (*construct)(Sky_Game *self);
-    void (*destruct)(Sky_Game *self);
+    void (*init)(Sky_Game *self);
+    void (*destoy)(Sky_Game *self);
 
     void (*reload)(Sky_Game *self);
     void (*loop)(Sky_Game *self);

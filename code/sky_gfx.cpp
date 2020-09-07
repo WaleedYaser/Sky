@@ -16,6 +16,7 @@ sky_gfx_program_new(const char *vshader, const char *fshader)
     if (success == false)
     {
         glGetShaderInfoLog(vertex_shader, sizeof(info_log), nullptr, info_log);
+        assert(false);
         return Sky_Gfx_Handle{};
     }
 
@@ -26,6 +27,7 @@ sky_gfx_program_new(const char *vshader, const char *fshader)
     if (success == false)
     {
         glGetShaderInfoLog(fragment_shader, sizeof(info_log), nullptr, info_log);
+        assert(false);
         return Sky_Gfx_Handle{};
     }
 
@@ -37,6 +39,7 @@ sky_gfx_program_new(const char *vshader, const char *fshader)
     if (success == false)
     {
         glGetProgramInfoLog(program, sizeof(info_log), nullptr, info_log);
+        assert(false);
         return Sky_Gfx_Handle{};
     }
 

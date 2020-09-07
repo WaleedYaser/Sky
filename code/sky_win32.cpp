@@ -25,37 +25,37 @@ _wnd_proc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 inline bool
 _hot_reload_sky_game(Sky_Game_Api **api)
 {
-	HANDLE hfile = CreateFile(L"sky_game.dll", GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
-	assert(hfile && "can't open sky_game.dll");
+    HANDLE hfile = CreateFile(L"sky_game.dll", GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
+    assert(hfile && "can't open sky_game.dll");
 
-	FILETIME ftwrite;
-	bool res = GetFileTime(hfile, nullptr, nullptr, &ftwrite);
+    FILETIME ftwrite;
+    bool res = GetFileTime(hfile, nullptr, nullptr, &ftwrite);
 
-	CloseHandle(hfile);
-	if (res == false)
-		return false;
+    CloseHandle(hfile);
+    if (res == false)
+        return false;
 
     static FILETIME last_time;
-	if (CompareFileTime(&last_time, &ftwrite) == 0)
-		return false;
+    if (CompareFileTime(&last_time, &ftwrite) == 0)
+        return false;
 
     static HMODULE sky_game_dll;
-	if (sky_game_dll)
-	{
-		res = FreeLibrary(sky_game_dll);
-		assert(res && "failed to unload sky_game.dll");
-	}
+    if (sky_game_dll)
+    {
+        res = FreeLibrary(sky_game_dll);
+        assert(res && "failed to unload sky_game.dll");
+    }
 
-	res = CopyFile(L"sky_game.dll", L"sky_game_tmp.dll", false);
-	if (res == false)
-		return false;
+    res = CopyFile(L"sky_game.dll", L"sky_game_tmp.dll", false);
+    if (res == false)
+        return false;
 
-	sky_game_dll = LoadLibrary(L"sky_game_tmp.dll");
-	assert(sky_game_dll && "failed to load kuro.dll");
+    sky_game_dll = LoadLibrary(L"sky_game_tmp.dll");
+    assert(sky_game_dll && "failed to load kuro.dll");
 
     *api = ((sky_game_api_proc)GetProcAddress(sky_game_dll, SKY_GAME_API_PROC_NAME))();
 
-	last_time = ftwrite;
+    last_time = ftwrite;
 
     return true;
 }
@@ -182,7 +182,7 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pCmdLine, int nCmdSh
     _hot_reload_sky_game(&api);
 
     Sky_Game game;
-    api->construct(&game);
+    api->init(&game);
     api->reload(&game);
 
     while (game.quit == false)
@@ -273,7 +273,7 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pCmdLine, int nCmdSh
 
     wglDeleteContext(context);
     DestroyWindow(hwnd);
-    api->destruct(&game);
+    api->destoy(&game);
 
     return 0;
 }
