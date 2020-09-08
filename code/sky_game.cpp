@@ -17,52 +17,37 @@ const char *vshader = R"""(
     #version 450 core
     layout (location = 0) in vec3 pos;
 
-    out vec3 v_pos;
-
+    uniform mat4 model;
     uniform mat4 view;
     uniform mat4 proj;
 
     void main()
     {
-        v_pos = pos;
-        gl_Position = vec4(pos, 1.0f) * view * proj;
+        gl_Position = vec4(pos, 1.0f) * model *view * proj;
     }
 )""";
 
 const char *fshader = R"""(
     #version 450 core
 
-    in vec3 v_pos;
-
     layout (location = 0) out vec4 out_color;
 
-    uniform vec3 cam_forward;
+    uniform vec4 color;
+
+    const float near = 0.1; 
+    const float far  = 100.0; 
+
+    float linear_depth(float depth) 
+    {
+        float z = depth * 2.0 - 1.0; // back to NDC 
+        return (2.0 * near * far) / (far + near - z * (far - near));
+    }
 
     void main()
     {
-        float ambient_factor = 0.9f;
-        vec3 ambient_color = ambient_factor * vec3(1.0f, 1.0f, 1.0f);
-
-        const vec3 lights[5] = vec3[](
-            vec3(   0.0f, -100.0f,    0.0f),
-            vec3(-100.0f, -100.0f, -100.0f),
-            vec3( 100.0f, -100.0f, -100.0f),
-            vec3(-100.0f, -100.0f,  100.0f),
-            vec3( 100.0f, -100.0f,  100.0f)
-        );
-
-        float diffuse_factor = 0;
-        for (int i = 0; i < 1; ++i)
-        {
-            vec3 normal = normalize(v_pos);
-            vec3 light_dir = normalize(lights[i] - v_pos);
-            diffuse_factor += max(dot(normal, light_dir), 0.0f);
-        }
-        vec3 diffuse_color = diffuse_factor * vec3(253.0f, 251.0f, 211.0f) / 255;
-
-        vec3 color = vec3(34, 167, 78) / 255;
-        out_color.rgb = (ambient_color + diffuse_color) * color;
-        out_color.a = 1.0f;
+        float depth = linear_depth(gl_FragCoord.z) / far;
+        out_color.rgb = color.rgb * depth;
+        out_color.a = color.a;
     }
 )""";
 
@@ -72,7 +57,6 @@ const char *vshader_sky = R"""(
     layout (location = 0) in vec3 pos;
 
     out vec3 v_pos;
-    out vec3 v_color;
 
     uniform mat4 view;
     uniform mat4 proj;
@@ -80,12 +64,7 @@ const char *vshader_sky = R"""(
     void main()
     {
         gl_Position = vec4(pos * mat3(view), 1.0f) * proj;
-
         v_pos = pos;
-        if (pos.y > 0)
-            v_color = vec3(0.2f, 0.4f, 0.8f);
-        else
-            v_color = vec3(1.0f, 0.3f, 0.0f);
     }
 )""";
 
@@ -93,7 +72,6 @@ const char *fshader_sky = R"""(
     #version 450 core
 
     in vec3 v_pos;
-    in vec3 v_color;
 
     layout (location = 0) out vec4 out_color;
 
@@ -282,8 +260,8 @@ _sky_game_loop(Sky_Game *self)
     glDisable(GL_DEPTH_TEST);
     glCullFace(GL_FRONT);
     sky_gfx_program_use(program_sky);
-    sky_gfx_program_set_mat4f(program, "view", &view.m00);
-    sky_gfx_program_set_mat4f(program, "proj", &proj.m00);
+    sky_gfx_program_set_mat4f(program_sky, "view", &view.m00);
+    sky_gfx_program_set_mat4f(program_sky, "proj", &proj.m00);
     glBindVertexArray(self->skybox_VAO);
     glDrawArrays(GL_TRIANGLES, 0, 36);
 
@@ -294,14 +272,20 @@ _sky_game_loop(Sky_Game *self)
     sky_gfx_program_set_mat4f(program, "model", &model.m00);
     sky_gfx_program_set_mat4f(program, "view", &view.m00);
     sky_gfx_program_set_mat4f(program, "proj", &proj.m00);
-    sky_gfx_program_set_vec3f(program, "cam_forward", &cam_forward.x);
+    Vec4 color = Vec4{34.0f, 167.0f, 78.0f, 1.0f} / 255.0f;
+    sky_gfx_program_set_vec4f(program, "color", &color.x);
     glBindVertexArray(self->VAO);
     glDrawArrays(GL_TRIANGLES, 0, self->map_cpu_vertex_count / 3);
 
-    model = mat4_scaling(100.0f, 100.0f, 100.0f);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    model = mat4_scaling(100.0f, 100.0f, 100.0f) * mat4_rotation_x(PI_OVER_2) * mat4_translation(0.0f, -2.0f, 0.0f);
+    Vec4 water_color = Vec4{115.0f, 182.0f, 254.0f, 200.0f} / 255.0f;
     sky_gfx_program_set_mat4f(program, "model", &model.m00);
+    sky_gfx_program_set_vec4f(program, "color", &water_color.x);
     glBindVertexArray(self->water_VAO);
     glDrawArrays(GL_TRIANGLES, 0, 6);
+    glDisable(GL_BLEND);
 
     ImGui::EndFrame();
     ImGui::Render();
