@@ -20,9 +20,9 @@ sky_cam_init()
 {
     Sky_Cam self{};
 
-    self.position.z = 34.0f;
-    self.position.y = 20.0f;
-    self.rotation.x = 30.0f * DEGREE_TO_RAD;
+    self.position.z = 50.0f;
+    self.position.y = 18.0f;
+    self.rotation.x = 10.0f * DEGREE_TO_RAD;
 
     self.fov = 45.0f;
     self.aspect = 1.0f;

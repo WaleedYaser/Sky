@@ -41,12 +41,6 @@ typedef struct Sky_Input
     Sky_Key_State keys[SKY_KEY_COUNT];
 } Sky_Input;
 
-typedef struct Sky_Mesh_GPU
-{
-    unsigned int handle;
-    int vertex_count;
-} Sky_Mesh_GPU;
-
 #define SKY_GAME_MAP_WIDTH 11
 #define SKY_GAME_MAP_HEIGHT 11
 #define SKY_GAME_MAX_VERTEX_BUFFER_SIZE (SKY_GAME_MAP_WIDTH * SKY_GAME_MAP_HEIGHT * 12 * 3 * 3 * sizeof(float))
@@ -63,6 +57,8 @@ typedef struct Sky_Game
     int map_cpu_vertex_count;
 
     unsigned int VAO, VBO;
+    unsigned int skybox_VAO;
+    unsigned int water_VAO;
 } Sky_Game;
 
 typedef struct Sky_Game_Api
