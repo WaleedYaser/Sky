@@ -1,6 +1,7 @@
 #pragma once
 
 #include "sky_cam.h"
+#include "sky_terrain.h"
 
 #define SKY_GAME_API __declspec(dllexport)
 #define SKY_GAME_API_PROC_NAME "sky_game_api"
@@ -51,14 +52,10 @@ typedef struct Sky_Game
     int width, height;
     Sky_Input input;
     Sky_Cam cam;
+    Sky_Terrain iseland_terrain;
+    Sky_Terrain water_terrain;
 
-    char map[SKY_GAME_MAP_WIDTH * SKY_GAME_MAP_HEIGHT];
-    float map_cpu[SKY_GAME_MAX_VERTEX_BUFFER_SIZE];
-    int map_cpu_vertex_count;
-
-    unsigned int VAO, VBO;
     unsigned int skybox_VAO;
-    unsigned int water_VAO;
 } Sky_Game;
 
 typedef struct Sky_Game_Api

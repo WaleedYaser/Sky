@@ -1,6 +1,6 @@
 #include "sky_gfx.h"
 
-#include<GL/glew.h>
+#include <GL/glew.h>
 
 #include <assert.h>
 

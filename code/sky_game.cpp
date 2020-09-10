@@ -7,6 +7,7 @@
 
 // unity build
 #include "sky_gfx.cpp"
+#include "sky_terrain.cpp"
 #include "imgui/imgui.cpp"
 #include "imgui/imgui_impl_opengl3.cpp"
 #include "imgui/imgui_demo.cpp"
@@ -123,17 +124,8 @@ _sky_game_init(Sky_Game *self)
     *self = {};
 
     self->cam = sky_cam_init();
-
-    {
-        glGenVertexArrays(1, &self->VAO);
-        glBindVertexArray(self->VAO);
-
-        glGenBuffers(1, &self->VBO);
-        glBindBuffer(GL_ARRAY_BUFFER, self->VBO);
-        glBufferData(GL_ARRAY_BUFFER, SKY_GAME_MAX_VERTEX_BUFFER_SIZE, nullptr, GL_DYNAMIC_DRAW);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), 0);
-        glEnableVertexAttribArray(0);
-    }
+    self->iseland_terrain = sky_terrain_generate(200, 200, 200, 200);
+    self->water_terrain = sky_terrain_generate(200, 200, 200, 200);
 
     {
         glGenVertexArrays(1, &self->skybox_VAO);
@@ -143,18 +135,6 @@ _sky_game_init(Sky_Game *self)
         glGenBuffers(1, &VBO);
         glBindBuffer(GL_ARRAY_BUFFER, VBO);
         glBufferData(GL_ARRAY_BUFFER, sizeof(premitive_cube), premitive_cube, GL_STATIC_DRAW);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), 0);
-        glEnableVertexAttribArray(0);
-    }
-
-    {
-        glGenVertexArrays(1, &self->water_VAO);
-        glBindVertexArray(self->water_VAO);
-
-        unsigned int VBO;
-        glGenBuffers(1, &VBO);
-        glBindBuffer(GL_ARRAY_BUFFER, VBO);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(premitive_plane), premitive_plane, GL_STATIC_DRAW);
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), 0);
         glEnableVertexAttribArray(0);
     }
@@ -176,33 +156,6 @@ _sky_game_reload(Sky_Game *self)
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGui_ImplOpenGL3_Init();
-
-    for (int i = 0; i < SKY_GAME_MAP_WIDTH * SKY_GAME_MAP_HEIGHT; ++i)
-        self->map[i] = i % 2;
-
-
-    self->map_cpu_vertex_count = 0;
-    for (int j = 0; j < SKY_GAME_MAP_HEIGHT; ++j)
-    {
-        for (int i = 0; i < SKY_GAME_MAP_WIDTH; ++i)
-        {
-            char value = self->map[j * SKY_GAME_MAP_WIDTH + i];
-            if (value == 1)
-            {
-                for (int k = 0; k < 108; k += 3)
-                {
-                    float x_offset = (float)((-SKY_GAME_MAP_WIDTH / 2 + i) * 2);
-                    float y_offset = -2.0f;
-                    float z_offset = (float)((-SKY_GAME_MAP_HEIGHT / 2 + j) * 2);
-                    self->map_cpu[self->map_cpu_vertex_count++] = premitive_cube[k + 0] + x_offset;
-                    self->map_cpu[self->map_cpu_vertex_count++] = premitive_cube[k + 1] + y_offset;
-                    self->map_cpu[self->map_cpu_vertex_count++] = premitive_cube[k + 2] + z_offset;
-                }
-            }
-        }
-    }
-
-    glNamedBufferSubData(self->VBO, 0, self->map_cpu_vertex_count * sizeof(float), self->map_cpu);
 
     program = sky_gfx_program_new(vshader, fshader);
     program_sky = sky_gfx_program_new(vshader_sky, fshader_sky);
@@ -265,7 +218,7 @@ _sky_game_loop(Sky_Game *self)
     glBindVertexArray(self->skybox_VAO);
     glDrawArrays(GL_TRIANGLES, 0, 36);
 
-    Mat4 model = mat4_identity();
+    Mat4 model = mat4_translation(0, -2, 0);
     glEnable(GL_DEPTH_TEST);
     glCullFace(GL_BACK);
     sky_gfx_program_use(program);
@@ -274,17 +227,17 @@ _sky_game_loop(Sky_Game *self)
     sky_gfx_program_set_mat4f(program, "proj", &proj.m00);
     Vec4 color = Vec4{34.0f, 167.0f, 78.0f, 1.0f} / 255.0f;
     sky_gfx_program_set_vec4f(program, "color", &color.x);
-    glBindVertexArray(self->VAO);
-    glDrawArrays(GL_TRIANGLES, 0, self->map_cpu_vertex_count / 3);
+    glBindVertexArray(self->iseland_terrain.mesh_gpu);
+    glDrawArrays(GL_TRIANGLES, 0, self->iseland_terrain.pos_count);
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    model = mat4_scaling(100.0f, 100.0f, 100.0f) * mat4_rotation_x(PI_OVER_2) * mat4_translation(0.0f, -2.0f, 0.0f);
+    model = mat4_translation(0, 0, 0);
     Vec4 water_color = Vec4{115.0f, 182.0f, 254.0f, 200.0f} / 255.0f;
     sky_gfx_program_set_mat4f(program, "model", &model.m00);
     sky_gfx_program_set_vec4f(program, "color", &water_color.x);
-    glBindVertexArray(self->water_VAO);
-    glDrawArrays(GL_TRIANGLES, 0, 6);
+    glBindVertexArray(self->water_terrain.mesh_gpu);
+    glDrawArrays(GL_TRIANGLES, 0, self->water_terrain.pos_count);
     glDisable(GL_BLEND);
 
     ImGui::EndFrame();
