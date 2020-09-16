@@ -12,7 +12,7 @@ SET UTEST_DIR=%ROOT_DIR%utest\
 if not exist %BUILD_DIR% mkdir %BUILD_DIR%
 pushd %BUILD_DIR%
 
-SET COMMON_INCLUDES=/I %CODE_DIR%glew\include
+SET COMMON_INCLUDES=/I %CODE_DIR% /I %CODE_DIR%glew\include
 SET COMMON_SHARED_LIBS=opengl32.lib %CODE_DIR%glew\lib\glew32.lib
 SET COMMON_COMPILE_OPTIONS=/MTd /nologo /GR- /EHa /Od /Oi /WX /W4 /wd4201 /wd4100 /wd4109 /FC /Z7
 SET COMMON_LINK_OPTIONS=/incremental:no /opt:ref

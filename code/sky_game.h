@@ -1,46 +1,11 @@
 #pragma once
 
 #include "sky_cam.h"
+#include "sky_input.h"
 #include "sky_terrain.h"
 
 #define SKY_GAME_API __declspec(dllexport)
 #define SKY_GAME_API_PROC_NAME "sky_game_api"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-enum SKY_KEY
-{
-    SKY_KEY_MOUSE_LEFT,
-    SKY_KEY_MOUSE_MIDDLE,
-    SKY_KEY_MOUSE_RIGHT,
-
-    SKY_KEY_LEFT,
-    SKY_KEY_RIGHT,
-    SKY_KEY_UP,
-    SKY_KEY_DOWN,
-    SKY_KEY_SPACE,
-    SKY_KEY_COUNT
-};
-
-typedef struct Sky_Key_State
-{
-    bool pressed;
-    bool released;
-    bool down;
-
-    int pressed_count;
-    int released_count;
-} Sky_Key_State;
-
-typedef struct Sky_Input
-{
-    int mouse_x, mouse_y;
-    int mouse_dx, mouse_dy;
-    float mouse_wheel;
-    Sky_Key_State keys[SKY_KEY_COUNT];
-} Sky_Input;
 
 #define SKY_GAME_MAP_WIDTH 11
 #define SKY_GAME_MAP_HEIGHT 11
@@ -67,11 +32,15 @@ typedef struct Sky_Game_Api
     void (*loop)(Sky_Game *self);
 } Sky_Game_Api;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 SKY_GAME_API Sky_Game_Api *
 sky_game_api();
-
-typedef Sky_Game_Api * (*sky_game_api_proc)(void);
 
 #ifdef __cplusplus
 }
 #endif
+
+typedef Sky_Game_Api * (*sky_game_api_proc)(void);

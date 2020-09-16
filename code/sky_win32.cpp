@@ -264,6 +264,7 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pCmdLine, int nCmdSh
         game.input.mouse_x = point.x;
         game.input.mouse_y = point.y;
 
+        game.input.delta_time = 1.0f / 60.0f;
         if (_hot_reload_sky_game(&api))
             api->reload(&game);
         api->loop(&game);

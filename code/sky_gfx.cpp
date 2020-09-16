@@ -1,8 +1,39 @@
 #include "sky_gfx.h"
 
 #include <GL/glew.h>
+#include <stb/stb_image.h>
 
 #include <assert.h>
+
+void
+sky_gfx_init()
+{
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGui_ImplOpenGL3_Init();
+}
+
+void
+sky_gfx_destroy()
+{
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui::DestroyContext();
+}
+
+void
+sky_gfx_frame_start()
+{
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui::NewFrame();
+}
+
+void
+sky_gfx_frame_end()
+{
+    ImGui::EndFrame();
+    ImGui::Render();
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+}
 
 Sky_Gfx_Handle
 sky_gfx_program_new(const char *vshader, const char *fshader)
@@ -135,4 +166,56 @@ sky_gfx_program_set_mat4f(Sky_Gfx_Handle program, const char *name, float *value
     assert(program.type == SKY_GFX_HANDLE_TYPE_PROGRAM);
     // we transpose our matrix so OpenGL deeals with it as row major
     glUniformMatrix4fv(glGetUniformLocation(program.handle, name), 1, GL_TRUE, value);
+}
+
+Sky_Gfx_Handle
+sky_gfx_texture_load(const char *path)
+{
+    stbi_set_flip_vertically_on_load(true);
+    int width, height, channels;
+    unsigned char *data = stbi_load(path, &width, &height, &channels, 0);
+    if (data == NULL)
+    {
+        fprintf(stderr, "failed to load '%s'\n", path);
+        exit(EXIT_FAILURE);
+    }
+
+    unsigned int id;
+    glGenTextures(1, &id);
+    glBindTexture(GL_TEXTURE_2D, id);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    if (channels == 3)
+    {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+    }
+    else if (channels == 4)
+    {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+    }
+    else
+    {
+        assert(false && "unhandled texture format");
+    }
+
+    glGenerateMipmap(GL_TEXTURE_2D);
+
+    stbi_image_free(data);
+
+    Sky_Gfx_Handle handle;
+    handle.type = SKY_GFX_HANDLE_TYPE_TEXTURE;
+    handle.handle = id;
+
+    return handle;
+}
+
+void
+sky_gfx_texture_free(Sky_Gfx_Handle texture)
+{
+    assert(texture.type == SKY_GFX_HANDLE_TYPE_TEXTURE);
+    glDeleteTextures(1, &texture.handle);
 }

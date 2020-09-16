@@ -2,17 +2,18 @@
 #include "sky_gfx.h"
 #include "sky_premitives.h"
 
-#include "imgui/imgui.h"
-#include "imgui/imgui_impl_opengl3.h"
+#include <imgui/imgui.h>
+#include <imgui/imgui_impl_opengl3.h>
 
 // unity build
 #include "sky_gfx.cpp"
 #include "sky_terrain.cpp"
-#include "imgui/imgui.cpp"
-#include "imgui/imgui_impl_opengl3.cpp"
-#include "imgui/imgui_demo.cpp"
-#include "imgui/imgui_draw.cpp"
-#include "imgui/imgui_widgets.cpp"
+#include <imgui/imgui.cpp>
+#include <imgui/imgui_impl_opengl3.cpp>
+#include <imgui/imgui_demo.cpp>
+#include <imgui/imgui_draw.cpp>
+#include <imgui/imgui_widgets.cpp>
+#include <stb/stb_image.cpp>
 
 const char *vshader = R"""(
     #version 450 core
@@ -124,8 +125,8 @@ _sky_game_init(Sky_Game *self)
     *self = {};
 
     self->cam = sky_cam_init();
-    self->iseland_terrain = sky_terrain_generate(200, 200, 200, 200);
-    self->water_terrain = sky_terrain_generate(200, 200, 200, 200);
+    self->iseland_terrain = sky_terrain_generate(5, 5, 1, 1);
+    self->water_terrain = sky_terrain_generate(5, 5, 1, 1);
 
     {
         glGenVertexArrays(1, &self->skybox_VAO);
@@ -145,21 +146,16 @@ _sky_game_init(Sky_Game *self)
 static void
 _sky_game_destroy(Sky_Game *self)
 {
-    ImGui_ImplOpenGL3_Shutdown();
-    ImGui::DestroyContext();
+    sky_gfx_destroy();
 }
 
 static void
 _sky_game_reload(Sky_Game *self)
 {
-    // imgui
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGui_ImplOpenGL3_Init();
+    sky_gfx_init();
 
     program = sky_gfx_program_new(vshader, fshader);
     program_sky = sky_gfx_program_new(vshader_sky, fshader_sky);
-
 }
 
 static void
@@ -175,31 +171,18 @@ _sky_game_loop(Sky_Game *self)
     io.MouseDown[2] = self->input.keys[SKY_KEY_MOUSE_MIDDLE].down;
     io.MouseWheel = self->input.mouse_wheel;
 
-    self->cam.aspect = (float)self->width / (float)self->height;
+    sky_cam_update(self->cam, self->input, (float)self->width, (float)self->height);
 
-    // source: https://community.khronos.org/t/simple-camera-rotation-around-a-point/75219/2
-    float rotation_speed = 0.05f;
-    if (self->input.keys[SKY_KEY_MOUSE_RIGHT].down)
-    {
-        if (self->input.mouse_dx > 0)
-        {
-            self->cam.rotation.y += rotation_speed;
-        }
-        else if (self->input.mouse_dx < 0)
-        {
-            self->cam.rotation.y -= rotation_speed;
-        } 
-    }
+    sky_gfx_frame_start();
 
     Mat4 view = sky_cam_view_mat(self->cam);
     Mat4 proj = sky_cam_proj_mat(self->cam);
-    Vec3 cam_forward = mat4_axis_z(view);
-
-    ImGui_ImplOpenGL3_NewFrame();
-    ImGui::NewFrame();
 
     ImGui::SliderFloat3("cam position", &self->cam.position.x, -100.0f, 100.0f);
     ImGui::SliderFloat3("cam rotation", &self->cam.rotation.x, -100.0f, 100.0f);
+    ImGui::SliderFloat3("cam right", &self->cam.right.x, -1.0f, 1.0f);
+    ImGui::SliderFloat3("cam up", &self->cam.up.x, -1.0f, 1.0f);
+    ImGui::SliderFloat3("cam forward", &self->cam.forward.x, -1.0f, 1.0f);
     ImGui::SliderFloat("cam fov", &self->cam.fov, 1, 90);
     ImGui::SliderFloat("cam aspect", &self->cam.aspect, 0.1f, 90);
     ImGui::SliderFloat("cam near", &self->cam.znear, 0.1f, 1000.0f);
@@ -240,9 +223,7 @@ _sky_game_loop(Sky_Game *self)
     glDrawArrays(GL_TRIANGLES, 0, self->water_terrain.pos_count);
     glDisable(GL_BLEND);
 
-    ImGui::EndFrame();
-    ImGui::Render();
-    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+    sky_gfx_frame_end();
 }
 
 Sky_Game_Api *
